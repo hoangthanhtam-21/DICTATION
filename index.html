@@ -308,10 +308,6 @@
         }
     });
 
-    function cleanWord(word) {
-        return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
-    }
-
     function checkAnswer() {
         const studentInputEl = document.getElementById('student-input');
         const studentText = studentInputEl.value.trim();
@@ -322,25 +318,38 @@
         
         let feedbackHTML = "";
         let correctCount = 0;
+        let sIdx = 0; // Con trỏ theo dõi vị trí từ của học sinh
 
-        correctWords.forEach((cWord, idx) => {
-            const sWord = studentWords[idx] || "";
-            if(cleanWord(cWord) === cleanWord(sWord)) {
-                feedbackHTML += `<span class="correct">${cWord}</span>`;
+        correctWords.forEach((cWord) => {
+            let found = false;
+            let cleanC = cleanWord(cWord);
+            
+            // Quét tìm từ đáp án trong câu của học sinh 
+            // Tìm trong phạm vi 4 từ tiếp theo để bù trừ việc học sinh gõ thừa/thiếu chữ
+            for(let j = sIdx; j < Math.min(sIdx + 4, studentWords.length); j++) {
+                if(cleanC === cleanWord(studentWords[j])) {
+                    found = true;
+                    sIdx = j + 1; // Đẩy con trỏ qua vị trí từ vừa tìm thấy để xét từ tiếp theo
+                    break;
+                }
+            }
+            
+            if(found) {
+                feedbackHTML += `<span class="correct">${cWord}</span> `;
                 correctCount++;
             } else {
-                feedbackHTML += `<span class="wrong">${cWord}</span>`;
+                feedbackHTML += `<span class="wrong">${cWord}</span> `;
             }
         });
 
         document.getElementById('feedback-area').innerHTML = feedbackHTML;
 
-        // Save scores temporarily
+        // Lưu điểm tạm thời
         studentInputEl.dataset.lastCorrectCount = correctCount;
         studentInputEl.dataset.lastTotalCount = correctWords.length;
         studentInputEl.dataset.checked = "true";
     }
-
+       
     function nextSegment() {
         const inputEl = document.getElementById('student-input');
         
