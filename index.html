@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dictation Practice App</title>
-    <!-- Load YouTube IFrame Player API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         :root {
@@ -48,7 +47,6 @@
         }
         button:hover { filter: brightness(1.1); }
         
-        /* Practice Area */
         #media-container { width: 100%; margin-bottom: 20px; position: relative; }
         #youtube-player { width: 100%; aspect-ratio: 16/9; pointer-events: none; }
         
@@ -58,27 +56,27 @@
         .controls-row { display: flex; gap: 10px; margin-top: 15px; }
         .controls-row button { margin-top: 0; }
         
-        /* Results */
         .result-box { text-align: center; font-size: 28px; font-weight: bold; margin-top: 20px; color: var(--primary-color); }
-        
         .help-text { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
         
         #share-link-container {
-            background: #e8f4f8;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 15px;
-            border-left: 4px solid var(--secondary-color);
+            background: #e8f4f8; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-color);
+        }
+        
+        /* Chỗ hiển thị lỗi trực quan */
+        #error-msg {
+            color: var(--danger-color); font-weight: bold; text-align: center; margin-bottom: 15px; min-height: 20px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- SECTION 1: TEACHER SETUP -->
     <div id="teacher-section" class="section active">
         <h1>Teacher Setup Panel</h1>
         
+        <div id="error-msg"></div>
+
         <div class="form-group">
             <label for="topic">Lesson Topic:</label>
             <input type="text" id="topic" placeholder="e.g., Nature, Daily Life, Science...">
@@ -99,8 +97,8 @@
         
         <div class="form-group">
             <label for="transcript">Transcript (with YouTube timestamps):</label>
-            <textarea id="transcript" rows="10" placeholder="0:00&#10;now from Antarctica to the subarctic the&#10;0:03&#10;town of Churchill in Northern Canada is"></textarea>
-            <div class="help-text">Please paste the transcript directly from YouTube including the timestamps (e.g., 0:00). This allows the system to auto-pause the video.</div>
+            <textarea id="transcript" rows="8" placeholder="0:00&#10;now from Antarctica to the subarctic the&#10;0:03&#10;town of Churchill in Northern Canada is"></textarea>
+            <div class="help-text">Please paste the transcript directly from YouTube including the timestamps.</div>
         </div>
         
         <button onclick="generateExercise()">Create & Play Exercise</button>
@@ -109,11 +107,10 @@
         <div id="share-link-container" style="display:none;">
             <label style="color: var(--purple-color);">Your Saved Lesson Link:</label>
             <input type="text" id="shareable-link" readonly onclick="this.select()">
-            <div class="help-text" style="color: var(--success-color); font-weight: bold; margin-top: 5px;">✓ Link copied to clipboard! Save this URL anywhere (Word, Notepad, Facebook) to reuse or send to students later.</div>
+            <div class="help-text" style="color: var(--success-color); font-weight: bold; margin-top: 5px;">✓ Link copied! Send this URL to your students.</div>
         </div>
     </div>
 
-    <!-- SECTION 2: STUDENT PRACTICE -->
     <div id="student-section" class="section">
         <h2 id="display-topic">Topic: </h2>
         <p style="text-align: center; font-style: italic; color: #7f8c8d;">Level: <span id="display-level"></span></p>
@@ -145,7 +142,6 @@
         <button id="btn-back" onclick="backToTeacher()" style="background-color: #95a5a6; width: auto; font-size: 14px; padding: 8px 15px;">Exit & Go Back</button>
     </div>
 
-    <!-- SECTION 3: RESULTS -->
     <div id="result-section" class="section">
         <h1>Practice Completed!</h1>
         <div class="result-box">
@@ -158,22 +154,19 @@
 
 <script>
     let ytPlayer = null;
-    let isPlayerReady = false;
     let segments = [];
     let currentSegmentIndex = 0;
     
     let totalWordsCount = 0;
     let totalCorrectWordsCount = 0;
     let checkInterval;
-    let isDirectStudentMode = false;
 
-    // Load URL Parameters on startup to check for saved sessions
+    // Load URL Parameters (for Students)
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
         const savedData = urlParams.get('ex');
         if (savedData) {
             try {
-                // Decode base64 UTF-8 safely
                 const decodedStr = decodeURIComponent(escape(atob(savedData)));
                 const data = JSON.parse(decodedStr);
                 
@@ -182,22 +175,22 @@
                 document.getElementById('youtube-url').value = data.u || "";
                 document.getElementById('transcript').value = data.s || "";
                 
-                isDirectStudentMode = true;
-                document.getElementById('btn-back').style.display = 'none'; // Hide config access from direct students
+                document.getElementById('btn-back').style.display = 'none'; 
                 document.getElementById('btn-result-action').innerText = "Practice Again";
                 document.getElementById('btn-result-action').onclick = function() { location.reload(); };
                 
-                // Automatically generate exercise
                 generateExercise();
             } catch (e) {
-                console.error("Failed to parse saved data link", e);
-                alert("The lesson link seems corrupted or incomplete.");
+                showError("The lesson link seems corrupted.");
             }
         }
     };
 
-    function onYouTubeIframeAPIReady() {
-        // Will initialize player dynamically
+    function showError(msg) {
+        const errDiv = document.getElementById('error-msg');
+        errDiv.innerText = msg;
+        // Tự động xóa thông báo sau 4 giây
+        setTimeout(() => { errDiv.innerText = ''; }, 4000);
     }
 
     function getYoutubeId(url) {
@@ -212,8 +205,7 @@
     }
 
     function processTranscript(text, level) {
-        const lines = text.split('
-').map(l => l.trim()).filter(l => l);
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
         let rawSegments = [];
         let currentSec = 0;
 
@@ -246,40 +238,49 @@
                 let wordCount = tempText.split(/\s+/).length;
                 
                 if (wordCount >= 15 || i === rawSegments.length - 1) {
-                    finalSegments.push({
-                        start: tempStart,
-                        end: rawSegments[i].end,
-                        text: tempText
-                    });
+                    finalSegments.push({ start: tempStart, end: rawSegments[i].end, text: tempText });
                     tempText = "";
-                    if (i + 1 < rawSegments.length) {
-                        tempStart = rawSegments[i+1].start;
-                    }
+                    if (i + 1 < rawSegments.length) tempStart = rawSegments[i+1].start;
                 }
             }
         }
         return finalSegments;
     }
 
-    function generateExercise() {
-        const topic = document.getElementById('topic').value || "Untitled Lesson";
-        const level = document.getElementById('level').value;
+    function validateInputs() {
         const ytUrl = document.getElementById('youtube-url').value;
         const transcriptText = document.getElementById('transcript').value;
         
+        if(!ytUrl.trim()) {
+            showError("❌ Please enter a YouTube URL!");
+            return false;
+        }
+        
         const videoId = getYoutubeId(ytUrl);
         if(!videoId) {
-            alert("Invalid YouTube URL! Please check again.");
-            return;
-        }
-        if(!transcriptText.trim()) {
-            alert("Please paste the transcript!");
-            return;
+            showError("❌ Invalid YouTube URL format!");
+            return false;
         }
 
-        segments = processTranscript(transcriptText, level);
+        if(!transcriptText.trim()) {
+            showError("❌ Please paste the transcript!");
+            return false;
+        }
+        
+        return { videoId, transcriptText };
+    }
+
+    // NÚT 1: Bắt đầu bài tập
+    function generateExercise() {
+        const valid = validateInputs();
+        if(!valid) return; // Nếu lỗi thì dừng lại, không làm gì tiếp
+
+        const topic = document.getElementById('topic').value || "Untitled Lesson";
+        const level = document.getElementById('level').value;
+
+        segments = processTranscript(valid.transcriptText, level);
         if(segments.length === 0) {
-            alert("Could not parse transcript. Make sure to include timestamps like 0:00");
+            showError("❌ Could not parse transcript! Make sure to include timestamps like '0:00'.");
             return;
         }
 
@@ -291,19 +292,11 @@
         document.getElementById('display-level').innerText = level === 'pre-int' ? 'Pre-intermediate' : 'Intermediate';
 
         if(ytPlayer) {
-            ytPlayer.loadVideoById(videoId);
+            ytPlayer.loadVideoById(valid.videoId);
         } else {
             ytPlayer = new YT.Player('youtube-player', {
-                height: '100%', width: '100%', videoId: videoId,
-                playerVars: { 
-                    'autoplay': 0, 
-                    'controls': 0, 
-                    'disablekb': 1,
-                    'rel': 0
-                },
-                events: {
-                    'onReady': () => { isPlayerReady = true; }
-                }
+                height: '100%', width: '100%', videoId: valid.videoId,
+                playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1, 'rel': 0 }
             });
         }
 
@@ -312,173 +305,3 @@
         
         const studentInput = document.getElementById('student-input');
         studentInput.value = "";
-        studentInput.dataset.checked = "false";
-        document.getElementById('feedback-area').innerHTML = "Ready! Click 'Play Segment' to start.";
-    }
-
-    function generateShareableLink() {
-        const topic = document.getElementById('topic').value;
-        const level = document.getElementById('level').value;
-        const ytUrl = document.getElementById('youtube-url').value;
-        const transcriptText = document.getElementById('transcript').value;
-
-        if(!ytUrl || !transcriptText.trim()) {
-            alert("Please provide a YouTube URL and Transcript first!");
-            return;
-        }
-
-        const lessonData = { t: topic, l: level, u: ytUrl, s: transcriptText };
-        const jsonStr = JSON.stringify(lessonData);
-        // Base64 encoding compatible with UTF-8 characters
-        const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
-        
-        const baseUrl = window.location.href.split('?')[0];
-        const shareUrl = `${baseUrl}?ex=${encoded}`;
-        
-        const shareInput = document.getElementById('shareable-link');
-        shareInput.value = shareUrl;
-        document.getElementById('share-link-container').style.display = 'block';
-        
-        // Auto-copy to clipboard
-        navigator.clipboard.writeText(shareUrl).catch(err => {
-            console.log("Auto-copy failed, user can manually copy.");
-        });
-    }
-
-    function updateProgress() {
-        document.getElementById('progress').innerText = `Segment: ${currentSegmentIndex + 1} / ${segments.length}`;
-    }
-
-    function playCurrentSegment() {
-        if(!ytPlayer || typeof ytPlayer.seekTo !== 'function') return;
-        
-        let seg = segments[currentSegmentIndex];
-        ytPlayer.seekTo(seg.start, true);
-        ytPlayer.playVideo();
-        
-        if(checkInterval) clearInterval(checkInterval);
-        
-        checkInterval = setInterval(() => {
-            let currentTime = ytPlayer.getCurrentTime();
-            if (currentTime >= seg.end) {
-                ytPlayer.pauseVideo();
-                clearInterval(checkInterval);
-                document.getElementById('student-input').focus();
-            }
-        }, 100);
-    }
-
-    document.getElementById('student-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            checkAnswer();
-        }
-    });
-
-    function cleanWord(word) {
-        return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
-    }
-
-    function checkAnswer() {
-        const studentInputEl = document.getElementById('student-input');
-        const studentText = studentInputEl.value.trim();
-        const correctText = segments[currentSegmentIndex].text;
-        
-        const studentWords = studentText.split(/\s+/).filter(w => w);
-        const correctWords = correctText.split(/\s+/).filter(w => w);
-        
-        let feedbackHTML = "";
-        let correctCount = 0;
-        let sIdx = 0; 
-
-        correctWords.forEach((cWord) => {
-            let found = false;
-            let cleanC = cleanWord(cWord);
-            
-            for(let j = sIdx; j < Math.min(sIdx + 4, studentWords.length); j++) {
-                if(cleanC === cleanWord(studentWords[j])) {
-                    found = true;
-                    sIdx = j + 1; 
-                    break;
-                }
-            }
-            
-            if(found) {
-                feedbackHTML += `<span class="correct">${cWord}</span> `;
-                correctCount++;
-            } else {
-                feedbackHTML += `<span class="wrong">${cWord}</span> `;
-            }
-        });
-
-        document.getElementById('feedback-area').innerHTML = feedbackHTML;
-
-        studentInputEl.dataset.lastCorrectCount = correctCount;
-        studentInputEl.dataset.lastTotalCount = correctWords.length;
-        studentInputEl.dataset.checked = "true";
-    }
-
-    function nextSegment() {
-        const inputEl = document.getElementById('student-input');
-        
-        if(inputEl.dataset.checked === "false" && inputEl.value.trim() !== "") {
-            checkAnswer();
-        }
-
-        const lastCorrect = parseInt(inputEl.dataset.lastCorrectCount || 0);
-        const lastTotal = parseInt(inputEl.dataset.lastTotalCount || segments[currentSegmentIndex].text.split(/\s+/).filter(w=>w).length);
-        
-        totalCorrectWordsCount += lastCorrect;
-        totalWordsCount += lastTotal;
-
-        currentSegmentIndex++;
-        if(currentSegmentIndex < segments.length) {
-            updateProgress();
-            inputEl.value = "";
-            inputEl.dataset.checked = "false";
-            inputEl.dataset.lastCorrectCount = 0;
-            inputEl.dataset.lastTotalCount = 0;
-            document.getElementById('feedback-area').innerHTML = "Listening to next segment...";
-            
-            setTimeout(() => { playCurrentSegment(); }, 500);
-        } else {
-            showFinalResults();
-        }
-    }
-
-    function stopAndShowResult() {
-        const inputEl = document.getElementById('student-input');
-        
-        // If they checked the current row, incorporate it before calculating final percentage
-        if(inputEl.dataset.checked === "true") {
-            const lastCorrect = parseInt(inputEl.dataset.lastCorrectCount || 0);
-            const lastTotal = parseInt(inputEl.dataset.lastTotalCount || segments[currentSegmentIndex].text.split(/\s+/).filter(w=>w).length);
-            totalCorrectWordsCount += lastCorrect;
-            totalWordsCount += lastTotal;
-        }
-        
-        showFinalResults();
-    }
-
-    function showFinalResults() {
-        switchSection('result-section');
-        if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
-        if(checkInterval) clearInterval(checkInterval);
-
-        const accuracy = totalWordsCount > 0 ? Math.round((totalCorrectWordsCount / totalWordsCount) * 100) : 0;
-        document.getElementById('accuracy-score').innerText = accuracy + "%";
-        document.getElementById('result-summary').innerText = `You completed your session early or on time. Accuracy: ${totalCorrectWordsCount} correct words out of ${totalWordsCount} graded words.`;
-    }
-
-    function switchSection(sectionId) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(sectionId).classList.add('active');
-    }
-
-    function backToTeacher() {
-        if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
-        if(checkInterval) clearInterval(checkInterval);
-        switchSection('teacher-section');
-    }
-</script>
-</body>
-</html>
