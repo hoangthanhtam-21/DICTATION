@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictation Practice App</title>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --bg-color: #f5f7fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1, h2 { text-align: center; color: var(--primary-color); }
+        .section { display: none; }
+        .active { display: block; }
+        
+        /* Form styles */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], textarea, select {
+            width: 100%; padding: 10px; box-sizing: border-box;
+            border: 1px solid #ccc; border-radius: 6px; font-size: 16px;
+        }
+        button {
+            background-color: var(--primary-color); color: white; border: none;
+            padding: 12px 20px; border-radius: 6px; cursor: pointer;
+            font-size: 16px; width: 100%; margin-top: 10px; transition: 0.3s;
+        }
+        button:hover { opacity: 0.9; }
+        
+        /* Practice Area */
+        #media-container { width: 100%; margin-bottom: 20px; display: flex; justify-content: center; }
+        #youtube-player { width: 100%; aspect-ratio: 16/9; max-height: 400px; }
+        .feedback { margin-top: 15px; font-size: 18px; line-height: 1.6; min-height: 40px; }
+        .wrong { color: var(--danger-color); text-decoration: line-through; font-weight: bold; }
+        .correct { color: var(--success-color); font-weight: bold; }
+        .controls-row { display: flex; gap: 10px; margin-top: 15px; }
+        
+        /* Results */
+        .result-box { text-align: center; font-size: 24px; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="teacher-section" class="section active">
+        <h1>Cấu Hình Bài Tập Dictation (Giáo viên)</h1>
+        <div class="form-group">
+            <label for="topic">Chủ đề bài học:</label>
+            <input type="text" id="topic" placeholder="Ví dụ: Travel, Daily Life...">
+        </div>
+        <div class="form-group">
+            <label for="level">Cấp độ:</label>
+            <select id="level">
+                <option value="pre-int">Pre-intermediate (Ngắt theo cụm ~10 từ)</option>
+                <option value="int">Intermediate (Ngắt theo cả câu đầy đủ)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="audio-source">Nguồn Media:</label>
+            <select id="audio-source" onchange="toggleMediaInput()">
+                <option value="youtube">Link YouTube Video</option>
+                <option value="upload">Upload File Audio (.mp3, .wav)</option>
+            </select>
+        </div>
+        <div class="form-group" id="yt-input-group">
+            <label for="youtube-url">Link YouTube:</label>
+            <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+        <div class="form-group" id="file-input-group" style="display:none;">
+            <label for="audio-file">Chọn file Audio:</label>
+            <input type="file" id="audio-file" accept="audio/*">
+        </div>
+        <div class="form-group">
+            <label for="transcript">Transcript (Nhập văn bản hoàn chỉnh của bài nghe):</label>
+            <textarea id="transcript" rows="6" placeholder="Nhập transcript tiếng Anh tại đây. Hệ thống sẽ tự động tách câu/cụm từ theo dấu câu."></textarea>
+        </div>
+        <button onclick="generateExercise()">Tạo Bài Tập Ngay</button>
+    </div>
+
+    <div id="student-section" class="section">
+        <h2 id="display-topic">Chủ đề: </h2>
+        <p style="text-align: center; font-style: italic;">Cấp độ: <span id="display-level"></span></p>
+        
+        <div id="media-container">
+            <div id="youtube-player"></div>
+            <audio id="audio-player" controls style="display:none; width: 100%;"></audio>
+        </div>
+
+        <div class="form-group">
+            <label for="student-input">Luyện nghe và gõ lại tại đây (Nhấn Enter để kiểm tra):</label>
+            <input type="text" id="student-input" autocomplete="off" disabled placeholder="Bấm 'Bắt đầu nghe' câu đầu tiên...">
+        </div>
+
+        <div id="feedback-area" class="feedback"></div>
+
+        <div class="controls-row">
+            <button id="btn-replay" onclick="replaySegment()" style="background-color: #f39c12;">Nghe Lại Đoạn Này</button>
+            <button id="btn-next" onclick="nextSegment()">Bỏ Qua / Câu Tiếp Theo</button>
+        </div>
+        
+        <div id="progress" style="margin-top: 15px; text-align: center; font-weight: bold;"></div>
+        <button onclick="backToTeacher()" style="background-color: #7f8c8d; margin-top: 30px;">Quay lại Trang Cấu Hình</button>
+    </div>
+
+    <div id="result-section" class="section">
+        <h1>Kết Quả Hoàn Thành!</h1>
+        <div class="result-box">
+            Tỉ lệ chính xác tổng thể: <span id="accuracy-score" style="color: var(--success-color);">0%</span>
+        </div>
+        <p id="result-summary" style="text-align: center; line-height: 1.6; margin-top: 20px;"></p>
+        <button onclick="backToTeacher()" style="background-color: var(--primary-color);">Làm Bài Tập Mới</button>
+    </div>
+</div>
+
+<script>
+    // Biến toàn cục điều khiển ứng dụng
+    let ytPlayer = null;
+    let audioPlayer = document.getElementById('audio-player');
+    let isYoutube = true;
+    
+    let segments = [];
+    let currentSegmentIndex = 0;
+    let level = 'pre-int';
+    
+    // Lưu trữ kết quả chấm điểm từng câu của học sinh
+    let totalWordsCount = 0;
+    let totalCorrectWordsCount = 0;
+
+    // Hàm chuyển đổi giao diện nhập media
+    function toggleMediaInput() {
+        const source = document.getElementById('audio-source').value;
+        if(source === 'youtube') {
+            document.getElementById('yt-input-group').style.display = 'block';
+            document.getElementById('file-input-group').style.display = 'none';
+            isYoutube = true;
+        } else {
+            document.getElementById('yt-input-group').style.display = 'none';
+            document.getElementById('file-input-group').style.display = 'block';
+            isYoutube = false;
+        }
+    }
+
+    // Trích xuất ID từ link Youtube
+    function getYoutubeId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // Xử lý chia nhỏ Transcript theo logic yêu cầu
+    function segmentTranscript(text, level) {
+        // Tách văn bản thành các câu dựa trên dấu chấm, hỏi, cảm thán
+        let sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+        let result = [];
+
+        sentences.forEach(sentence => {
+            sentence = sentence.trim();
+            if (!sentence) return;
+
+            let words = sentence.split(/\s+/);
+            
+            if (level === 'int' || words.length <= 10) {
+                // Cấp độ Intermediate hoặc câu ngắn: giữ nguyên cả câu
+                result.push(sentence);
+            } else {
+                // Cấp độ Pre-intermediate: Cắt câu dài thành các chunk tối đa 10 từ
+                let tempChunk = [];
+                words.forEach((word, index) => {
+                    tempChunk.push(word);
+                    if (tempChunk.length === 10 || index === words.length - 1) {
+                        result.push(tempChunk.join(' '));
+                        tempChunk = [];
+                    }
+                });
+            }
+        });
+        return result;
+    }
+
+    // Bắt đầu tạo bài tập
+    function generateExercise() {
+        const topic = document.getElementById('topic').value || "Chưa xác định";
+        level = document.getElementById('level').value;
+        const transcriptText = document.getElementById('transcript').value.trim();
+        
+        if(!transcriptText) {
+            alert("Vui lòng nhập Transcript!");
+            return;
+        }
+
+        // Tạo danh sách các câu/cụm từ cần dictation
+        segments = segmentTranscript(transcriptText, level);
+        currentSegmentIndex = 0;
+        totalWordsCount = 0;
+        totalCorrectWordsCount = 0;
+
+        // Hiển thị thông tin
+        document.getElementById('display-topic').innerText = "Chủ đề: " + topic;
+        document.getElementById('display-level').innerText = level === 'pre-int' ? 'Pre-intermediate (Chunks)' : 'Intermediate (Full Sentence)';
+        
+        // Setup Media
+        if(isYoutube) {
+            const ytUrl = document.getElementById('youtube-url').value;
+            const videoId = getYoutubeId(ytUrl);
+            if(!videoId) {
+                alert("Link YouTube không hợp lệ!");
+                return;
+            }
+            document.getElementById('youtube-player').style.display = 'block';
+            audioPlayer.style.display = 'none';
+            
+            if(ytPlayer) {
+                ytPlayer.loadVideoById(videoId);
+            } else {
+                ytPlayer = new YT.Player('youtube-player', {
+                    height: '100%', width: '100%', videoId: videoId,
+                    playerVars: { 'autoplay': 0, 'controls': 1 }
+                });
+            }
+        } else {
+            const fileInput = document.getElementById('audio-file');
+            if(fileInput.files.length === 0) {
+                alert("Vui lòng chọn file audio!");
+                return;
+            }
+            document.getElementById('youtube-player').style.display = 'none';
+            audioPlayer.style.display = 'block';
+            audioPlayer.src = URL.createObjectURL(fileInput.files[0]);
+        }
+
+        // Chuyển màn hình
+        switchSection('student-section');
+        updateProgress();
+        
+        // Kích hoạt ô nhập dữ liệu
+        const studentInput = document.getElementById('student-input');
+        studentInput.disabled = false;
+        studentInput.value = "";
+        document.getElementById('feedback-area').innerHTML = "Bấm Enter ở ô nhập hoặc bấm nút điều khiển để nghe đoạn đầu tiên.";
+    }
+
+    function updateProgress() {
+        document.getElementById('progress').innerText = `Đoạn: ${currentSegmentIndex + 1} / ${segments.length}`;
+    }
+
+    // Điều khiển phát/dừng âm thanh (Hỗ trợ cả Youtube và Audio file)
+    function playCurrentSegment() {
+        if(isYoutube && ytPlayer && ytPlayer.playVideo) {
+            ytPlayer.playVideo();
+        } else if(!isYoutube && audioPlayer) {
+            audioPlayer.play();
+        }
+    }
+
+    function pauseMedia() {
+        if(isYoutube && ytPlayer && ytPlayer.pauseVideo) {
+            ytPlayer.pauseVideo();
+        } else if(!isYoutube && audioPlayer) {
+            audioPlayer.pause();
+        }
+    }
+
+    function replaySegment() {
+        if(isYoutube && ytPlayer) {
+            ytPlayer.seekTo(0); // Vì bản thử nghiệm đơn giản chưa map timeline tự động, hỗ trợ nghe từ đầu hoặc giáo viên tua thủ công.
+            ytPlayer.playVideo();
+        } else if(!isYoutube && audioPlayer) {
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+        }
+    }
+
+    // Xử lý chấm điểm khi học sinh gõ xong nhấn Enter
+    document.getElementById('student-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkAnswer();
+        }
+    });
+
+    function cleanWord(word) {
+        return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim();
+    }
+
+    function checkAnswer() {
+        const studentText = document.getElementById('student-input').value.trim();
+        const correctText = segments[currentSegmentIndex];
+        
+        const studentWords = studentText.split(/\s+/);
+        const correctWords = correctText.split(/\s+/);
+        
+        let feedbackHTML = "";
+        let correctCount = 0;
+
+        // So sánh từng từ
+        correctWords.forEach((cWord, idx) => {
+            const sWord = studentWords[idx] || "";
+            if(cleanWord(cWord) === cleanWord(sWord)) {
+                feedbackHTML += `<span class="correct">${cWord}</span> `;
+                correctCount++;
+            } else {
+                feedbackHTML += `<span class="wrong">${cWord}</span> `;
+            }
+        });
+
+        document.getElementById('feedback-area').innerHTML = feedbackHTML;
+
+        // Lưu tạm thống kê của câu này câu hiện tại
+        // (Sẽ chính thức cộng dồn khi học sinh bấm qua câu tiếp theo)
+        document.getElementById('student-input').dataset.lastCorrectCount = correctCount;
+        document.getElementById('student-input').dataset.lastTotalCount = correctWords.length;
+    }
+
+    function nextSegment() {
+        // Cộng dồn điểm câu cũ trước khi qua câu mới
+        const inputEl = document.getElementById('student-input');
+        const lastCorrect = parseInt(inputEl.dataset.lastCorrectCount || 0);
+        const lastTotal = parseInt(inputEl.dataset.lastTotalCount || segments[currentSegmentIndex].split(/\s+/).length);
+        
+        totalCorrectWordsCount += lastCorrect;
+        totalWordsCount += lastTotal;
+
+        // Chuyển câu
+        currentSegmentIndex++;
+        if(currentSegmentIndex < segments.length) {
+            updateProgress();
+            inputEl.value = "";
+            inputEl.dataset.lastCorrectCount = 0;
+            inputEl.dataset.lastTotalCount = 0;
+            document.getElementById('feedback-area').innerHTML = "";
+            replaySegment(); // Phát lại từ đầu cho đoạn mới (với file âm thanh)
+        } else {
+            showFinalResults();
+        }
+    }
+
+    function showFinalResults() {
+        switchSection('result-section');
+        const accuracy = totalWordsCount > 0 ? Math.round((totalCorrectWordsCount / totalWordsCount) * 100) : 0;
+        document.getElementById('accuracy-score').innerText = accuracy + "%";
+        document.getElementById('result-summary').innerText = `Học sinh đã hoàn thành đúng ${totalCorrectWordsCount} trên tổng số ${totalWordsCount} từ của bài nghe.`;
+        pauseMedia();
+    }
+
+    function switchSection(sectionId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+    }
+
+    function backToTeacher() {
+        pauseMedia();
+        switchSection('teacher-section');
+    }
+</script>
+</body>
+</html>
