@@ -7,32 +7,20 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --danger-color: #c0392b;
-            --purple-color: #8e44ad;
-            --bg-color: #ecf0f1;
+            --primary-color: #2c3e50; --secondary-color: #3498db;
+            --success-color: #27ae60; --danger-color: #c0392b;
+            --purple-color: #8e44ad; --bg-color: #ecf0f1;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: #333;
+            background-color: var(--bg-color); margin: 0; padding: 20px; color: #333;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 800px; margin: 0 auto; background: white; padding: 30px;
+            border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         h1, h2 { text-align: center; color: var(--primary-color); }
-        .section { display: none; }
-        .active { display: block; }
-        
+        .section { display: none; } .active { display: block; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; }
         input[type="text"], textarea, select {
@@ -42,31 +30,20 @@
         button {
             background-color: var(--secondary-color); color: white; border: none;
             padding: 14px 20px; border-radius: 6px; cursor: pointer;
-            font-size: 16px; width: 100%; margin-top: 10px; font-weight: bold;
-            transition: 0.2s;
+            font-size: 16px; width: 100%; margin-top: 10px; font-weight: bold; transition: 0.2s;
         }
         button:hover { filter: brightness(1.1); }
-        
         #media-container { width: 100%; margin-bottom: 20px; position: relative; }
         #youtube-player { width: 100%; aspect-ratio: 16/9; pointer-events: none; }
-        
         .feedback { margin-top: 15px; font-size: 18px; line-height: 1.6; min-height: 40px; padding: 15px; background: #f9f9f9; border-radius: 6px; border: 1px dashed #ccc;}
         .wrong { color: var(--danger-color); text-decoration: line-through; font-weight: bold; margin-right: 5px;}
         .correct { color: var(--success-color); font-weight: bold; margin-right: 5px;}
         .controls-row { display: flex; gap: 10px; margin-top: 15px; }
         .controls-row button { margin-top: 0; }
-        
         .result-box { text-align: center; font-size: 28px; font-weight: bold; margin-top: 20px; color: var(--primary-color); }
         .help-text { font-size: 13px; color: #7f8c8d; margin-top: 5px; }
-        
-        #share-link-container {
-            background: #e8f4f8; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-color);
-        }
-        
-        /* Chỗ hiển thị lỗi trực quan */
-        #error-msg {
-            color: var(--danger-color); font-weight: bold; text-align: center; margin-bottom: 15px; min-height: 20px;
-        }
+        #share-link-container { background: #e8f4f8; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid var(--secondary-color); }
+        #error-msg { color: var(--danger-color); font-weight: bold; text-align: center; margin-bottom: 15px; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -74,31 +51,29 @@
 <div class="container">
     <div id="teacher-section" class="section active">
         <h1>Teacher Setup Panel</h1>
-        
         <div id="error-msg"></div>
 
         <div class="form-group">
-            <label for="topic">Lesson Topic:</label>
-            <input type="text" id="topic" placeholder="e.g., Nature, Daily Life, Science...">
+            <label>Lesson Topic:</label>
+            <input type="text" id="topic" placeholder="e.g., Nature, Daily Life...">
         </div>
         
         <div class="form-group">
-            <label for="level">Difficulty Level:</label>
+            <label>Difficulty Level:</label>
             <select id="level">
-                <option value="pre-int">Pre-intermediate (Short chunks, ~6-10 words)</option>
-                <option value="int">Intermediate (Longer chunks/sentences)</option>
+                <option value="pre-int">Pre-intermediate (Short chunks)</option>
+                <option value="int">Intermediate (Longer sentences)</option>
             </select>
         </div>
         
         <div class="form-group">
-            <label for="youtube-url">YouTube Video URL:</label>
+            <label>YouTube Video URL:</label>
             <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
         </div>
         
         <div class="form-group">
-            <label for="transcript">Transcript (with YouTube timestamps):</label>
-            <textarea id="transcript" rows="8" placeholder="0:00&#10;now from Antarctica to the subarctic the&#10;0:03&#10;town of Churchill in Northern Canada is"></textarea>
-            <div class="help-text">Please paste the transcript directly from YouTube including the timestamps.</div>
+            <label>Transcript (with timestamps):</label>
+            <textarea id="transcript" rows="6" placeholder="0:00&#10;hello world"></textarea>
         </div>
         
         <button onclick="generateExercise()">Create & Play Exercise</button>
@@ -107,78 +82,63 @@
         <div id="share-link-container" style="display:none;">
             <label style="color: var(--purple-color);">Your Saved Lesson Link:</label>
             <input type="text" id="shareable-link" readonly onclick="this.select()">
-            <div class="help-text" style="color: var(--success-color); font-weight: bold; margin-top: 5px;">✓ Link copied! Send this URL to your students.</div>
+            <div class="help-text" style="color: var(--success-color); font-weight: bold; margin-top: 5px;">✓ Link copied!</div>
         </div>
     </div>
 
     <div id="student-section" class="section">
         <h2 id="display-topic">Topic: </h2>
-        <p style="text-align: center; font-style: italic; color: #7f8c8d;">Level: <span id="display-level"></span></p>
+        <p style="text-align: center; color: #7f8c8d;">Level: <span id="display-level"></span></p>
         
-        <div id="media-container">
-            <div id="youtube-player"></div>
-        </div>
+        <div id="media-container"><div id="youtube-player"></div></div>
 
         <div class="controls-row">
-            <button id="btn-play" onclick="playCurrentSegment()" style="background-color: #27ae60;">▶ Play Segment</button>
-            <button id="btn-replay" onclick="playCurrentSegment()" style="background-color: #f39c12;">↺ Listen Again</button>
+            <button onclick="playCurrentSegment()" style="background-color: #27ae60;">▶ Play Segment</button>
+            <button onclick="playCurrentSegment()" style="background-color: #f39c12;">↺ Listen Again</button>
         </div>
 
         <div class="form-group" style="margin-top: 20px;">
-            <label for="student-input">Type what you hear (Press ENTER to submit):</label>
-            <input type="text" id="student-input" autocomplete="off" placeholder="Click 'Play Segment' to start listening...">
+            <label>Type what you hear (Press ENTER):</label>
+            <input type="text" id="student-input" autocomplete="off">
         </div>
 
         <div id="feedback-area" class="feedback">Your checked answer will appear here...</div>
 
         <div class="controls-row">
-            <button id="btn-next" onclick="nextSegment()" style="background-color: #2980b9;">Next Segment ➔</button>
-            <button id="btn-stop" onclick="stopAndShowResult()" style="background-color: var(--danger-color);">📊 Show Result (Stop Early)</button>
+            <button onclick="nextSegment()" style="background-color: #2980b9;">Next Segment ➔</button>
+            <button onclick="stopAndShowResult()" style="background-color: var(--danger-color);">📊 Show Result</button>
         </div>
         
         <div id="progress" style="margin-top: 20px; text-align: center; font-weight: bold; color: #7f8c8d;"></div>
-        
         <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
         <button id="btn-back" onclick="backToTeacher()" style="background-color: #95a5a6; width: auto; font-size: 14px; padding: 8px 15px;">Exit & Go Back</button>
     </div>
 
     <div id="result-section" class="section">
         <h1>Practice Completed!</h1>
-        <div class="result-box">
-            Overall Accuracy: <span id="accuracy-score" style="color: var(--success-color);">0%</span>
-        </div>
+        <div class="result-box">Overall Accuracy: <span id="accuracy-score" style="color: var(--success-color);">0%</span></div>
         <p id="result-summary" style="text-align: center; font-size: 18px; margin-top: 20px;"></p>
         <button id="btn-result-action" onclick="backToTeacher()" style="background-color: var(--secondary-color); margin-top: 30px;">Create New Exercise</button>
     </div>
 </div>
 
 <script>
-    let ytPlayer = null;
-    let segments = [];
-    let currentSegmentIndex = 0;
-    
-    let totalWordsCount = 0;
-    let totalCorrectWordsCount = 0;
-    let checkInterval;
+    let ytPlayer = null, segments = [], currentSegmentIndex = 0;
+    let totalWordsCount = 0, totalCorrectWordsCount = 0, checkInterval;
 
-    // Load URL Parameters (for Students)
     window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const savedData = urlParams.get('ex');
-        if (savedData) {
+        const params = new URLSearchParams(window.location.search);
+        const ex = params.get('ex');
+        if (ex) {
             try {
-                const decodedStr = decodeURIComponent(escape(atob(savedData)));
-                const data = JSON.parse(decodedStr);
-                
+                const data = JSON.parse(decodeURIComponent(escape(atob(ex))));
                 document.getElementById('topic').value = data.t || "";
                 document.getElementById('level').value = data.l || "pre-int";
                 document.getElementById('youtube-url').value = data.u || "";
                 document.getElementById('transcript').value = data.s || "";
-                
                 document.getElementById('btn-back').style.display = 'none'; 
                 document.getElementById('btn-result-action').innerText = "Practice Again";
                 document.getElementById('btn-result-action').onclick = function() { location.reload(); };
-                
                 generateExercise();
             } catch (e) {
                 showError("The lesson link seems corrupted.");
@@ -189,13 +149,11 @@
     function showError(msg) {
         const errDiv = document.getElementById('error-msg');
         errDiv.innerText = msg;
-        // Tự động xóa thông báo sau 4 giây
         setTimeout(() => { errDiv.innerText = ''; }, 4000);
     }
 
     function getYoutubeId(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
+        const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
@@ -206,9 +164,7 @@
 
     function processTranscript(text, level) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-        let rawSegments = [];
-        let currentSec = 0;
-
+        let rawSegments = [], currentSec = 0;
         for(let i=0; i<lines.length; i++) {
             if (/^(\d{1,2}:)?(\d{1,2}):(\d{2})$/.test(lines[i])) {
                 currentSec = parseTime(lines[i]);
@@ -220,23 +176,18 @@
                 }
             }
         }
-
         if(rawSegments.length === 0) return [];
-
         for(let i=0; i<rawSegments.length; i++) {
             rawSegments[i].end = (i < rawSegments.length - 1) ? rawSegments[i+1].start : rawSegments[i].start + 5;
         }
-
         let finalSegments = [];
         if (level === 'pre-int') {
             finalSegments = rawSegments;
         } else {
-            let tempText = "";
-            let tempStart = rawSegments[0].start;
+            let tempText = "", tempStart = rawSegments[0].start;
             for(let i=0; i<rawSegments.length; i++) {
                 tempText += (tempText ? " " : "") + rawSegments[i].text;
                 let wordCount = tempText.split(/\s+/).length;
-                
                 if (wordCount >= 15 || i === rawSegments.length - 1) {
                     finalSegments.push({ start: tempStart, end: rawSegments[i].end, text: tempText });
                     tempText = "";
@@ -250,47 +201,26 @@
     function validateInputs() {
         const ytUrl = document.getElementById('youtube-url').value;
         const transcriptText = document.getElementById('transcript').value;
-        
-        if(!ytUrl.trim()) {
-            showError("❌ Please enter a YouTube URL!");
-            return false;
-        }
-        
+        if(!ytUrl.trim()) { showError("❌ Please enter a YouTube URL!"); return false; }
         const videoId = getYoutubeId(ytUrl);
-        if(!videoId) {
-            showError("❌ Invalid YouTube URL format!");
-            return false;
-        }
-
-        if(!transcriptText.trim()) {
-            showError("❌ Please paste the transcript!");
-            return false;
-        }
-        
+        if(!videoId) { showError("❌ Invalid YouTube URL format!"); return false; }
+        if(!transcriptText.trim()) { showError("❌ Please paste the transcript!"); return false; }
         return { videoId, transcriptText };
     }
 
-    // NÚT 1: Bắt đầu bài tập
     function generateExercise() {
         const valid = validateInputs();
-        if(!valid) return; // Nếu lỗi thì dừng lại, không làm gì tiếp
-
+        if(!valid) return;
         const topic = document.getElementById('topic').value || "Untitled Lesson";
         const level = document.getElementById('level').value;
-
         segments = processTranscript(valid.transcriptText, level);
         if(segments.length === 0) {
-            showError("❌ Could not parse transcript! Make sure to include timestamps like '0:00'.");
-            return;
+            showError("❌ Could not parse transcript! Missing timestamps."); return;
         }
-
-        currentSegmentIndex = 0;
-        totalWordsCount = 0;
-        totalCorrectWordsCount = 0;
-
+        currentSegmentIndex = 0; totalWordsCount = 0; totalCorrectWordsCount = 0;
         document.getElementById('display-topic').innerText = "Topic: " + topic;
         document.getElementById('display-level').innerText = level === 'pre-int' ? 'Pre-intermediate' : 'Intermediate';
-
+        
         if(ytPlayer) {
             ytPlayer.loadVideoById(valid.videoId);
         } else {
@@ -299,9 +229,103 @@
                 playerVars: { 'autoplay': 0, 'controls': 0, 'disablekb': 1, 'rel': 0 }
             });
         }
-
         switchSection('student-section');
         updateProgress();
-        
         const studentInput = document.getElementById('student-input');
-        studentInput.value = "";
+        studentInput.value = ""; studentInput.dataset.checked = "false";
+        document.getElementById('feedback-area').innerHTML = "Ready! Click 'Play Segment' to start.";
+    }
+
+    function generateShareableLink() {
+        const valid = validateInputs();
+        if(!valid) return;
+        const lessonData = { t: document.getElementById('topic').value, l: document.getElementById('level').value, u: document.getElementById('youtube-url').value, s: valid.transcriptText };
+        try {
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(lessonData))));
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = baseUrl + "?ex=" + encoded;
+            document.getElementById('shareable-link').value = shareUrl;
+            document.getElementById('share-link-container').style.display = 'block';
+            navigator.clipboard.writeText(shareUrl).catch(e => console.log("Copy failed"));
+        } catch (error) { showError("❌ Error generating link."); }
+    }
+
+    function updateProgress() { document.getElementById('progress').innerText = `Segment: ${currentSegmentIndex + 1} / ${segments.length}`; }
+
+    function playCurrentSegment() {
+        if(!ytPlayer || typeof ytPlayer.seekTo !== 'function') return;
+        let seg = segments[currentSegmentIndex];
+        ytPlayer.seekTo(seg.start, true); ytPlayer.playVideo();
+        if(checkInterval) clearInterval(checkInterval);
+        checkInterval = setInterval(() => {
+            if (ytPlayer.getCurrentTime() >= seg.end) {
+                ytPlayer.pauseVideo(); clearInterval(checkInterval); document.getElementById('student-input').focus();
+            }
+        }, 100);
+    }
+
+    document.getElementById('student-input').addEventListener('keypress', function(e) { if (e.key === 'Enter') checkAnswer(); });
+
+    function cleanWord(word) { return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim(); }
+
+    function checkAnswer() {
+        const inputEl = document.getElementById('student-input');
+        const sWords = inputEl.value.trim().split(/\s+/).filter(w => w);
+        const cWords = segments[currentSegmentIndex].text.split(/\s+/).filter(w => w);
+        let fb = "", cCount = 0, sIdx = 0; 
+        cWords.forEach((c) => {
+            let found = false, clC = cleanWord(c);
+            for(let j = sIdx; j < Math.min(sIdx + 4, sWords.length); j++) {
+                if(clC === cleanWord(sWords[j])) { found = true; sIdx = j + 1; break; }
+            }
+            if(found) { fb += `<span class="correct">${c}</span> `; cCount++; }
+            else { fb += `<span class="wrong">${c}</span> `; }
+        });
+        document.getElementById('feedback-area').innerHTML = fb;
+        inputEl.dataset.lastCorrectCount = cCount; inputEl.dataset.lastTotalCount = cWords.length; inputEl.dataset.checked = "true";
+    }
+
+    function nextSegment() {
+        const inputEl = document.getElementById('student-input');
+        if(inputEl.dataset.checked === "false" && inputEl.value.trim() !== "") checkAnswer();
+        totalCorrectWordsCount += parseInt(inputEl.dataset.lastCorrectCount || 0);
+        totalWordsCount += parseInt(inputEl.dataset.lastTotalCount || segments[currentSegmentIndex].text.split(/\s+/).filter(w=>w).length);
+        currentSegmentIndex++;
+        if(currentSegmentIndex < segments.length) {
+            updateProgress(); inputEl.value = ""; inputEl.dataset.checked = "false"; inputEl.dataset.lastCorrectCount = 0; inputEl.dataset.lastTotalCount = 0;
+            document.getElementById('feedback-area').innerHTML = "Listening to next segment...";
+            setTimeout(() => playCurrentSegment(), 500);
+        } else { showFinalResults(); }
+    }
+
+    function stopAndShowResult() {
+        const inputEl = document.getElementById('student-input');
+        if(inputEl.dataset.checked === "true") {
+            totalCorrectWordsCount += parseInt(inputEl.dataset.lastCorrectCount || 0);
+            totalWordsCount += parseInt(inputEl.dataset.lastTotalCount || segments[currentSegmentIndex].text.split(/\s+/).filter(w=>w).length);
+        }
+        showFinalResults();
+    }
+
+    function showFinalResults() {
+        switchSection('result-section');
+        if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+        if(checkInterval) clearInterval(checkInterval);
+        const acc = totalWordsCount > 0 ? Math.round((totalCorrectWordsCount / totalWordsCount) * 100) : 0;
+        document.getElementById('accuracy-score').innerText = acc + "%";
+        document.getElementById('result-summary').innerText = `Accuracy: ${totalCorrectWordsCount} correct words out of ${totalWordsCount} graded words.`;
+    }
+
+    function switchSection(sectionId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+    }
+
+    function backToTeacher() {
+        if(ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+        if(checkInterval) clearInterval(checkInterval);
+        switchSection('teacher-section');
+    }
+</script>
+</body>
+</html>
